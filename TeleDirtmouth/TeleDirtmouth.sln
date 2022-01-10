@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeleDirtmouth", "TeleDirtmouth\TeleDirtmouth.csproj", "{2BE0D324-0A03-4895-B21D-B44F08175F37}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2BE0D324-0A03-4895-B21D-B44F08175F37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BE0D324-0A03-4895-B21D-B44F08175F37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BE0D324-0A03-4895-B21D-B44F08175F37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BE0D324-0A03-4895-B21D-B44F08175F37}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4755EEFD-E57D-4EAE-9B79-F741AE1D9CDB}
+	EndGlobalSection
+EndGlobal
