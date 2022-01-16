@@ -25,6 +25,8 @@ namespace HKHeroControl
         GameObject hkCollider = null;
         ColliderGameObject slashCollider = null;
 
+        GameObject plume = null;
+
         void Awake()
         {
             TranAttach.AutoDis = false;
@@ -33,6 +35,9 @@ namespace HKHeroControl
             defaultActions = new DefaultActions(animator, rig);
 
             smallShotBullet = gameObject.GetFSMActionsOnState<FlingObjectsFromGlobalPoolTime>("SmallShot HighLow")[0].gameObject.Value;
+
+            plume = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("Plume Gen")[0].gameObject.Value;
+            
 
             //借用Stun碰撞箱作为Hollow Knight的整体碰撞箱
             hkCollider = gameObject.FindGameObjectInChildren("Counter");   
@@ -59,6 +64,7 @@ namespace HKHeroControl
 
             TranAttach.RegisterAction("FALL", ActionFall,
                 TranAttach.InvokeWithout("FALL"),
+                TranAttach.InvokeWithout("QUAKE"),
                 TranAttach.InvokeWithout("DASH")
                 );
             TranAttach.InvokeActionOn("FALL", defaultActions.FallTest);
@@ -72,6 +78,7 @@ namespace HKHeroControl
 
             TranAttach.RegisterAction("RUN", ActionRun,
                 TranAttach.InvokeWithout("DASH"),
+                TranAttach.InvokeWithout("FIREBALL"),
                 TranAttach.InvokeWithout("QUAKE"),
                 TranAttach.InvokeWithout("ATTACK"),
                 TranAttach.InvokeWithout("RUN"));
@@ -93,7 +100,7 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("JUMP"),
                 TranAttach.InvokeWithout("FALL"),
                 TranAttach.InvokeWithout("DASH"),
-                TranAttach.InvokeWithout("RUN"),
+                //TranAttach.InvokeWithout("RUN"),
                 TranAttach.InvokeWithout("C"),
                 TranAttach.InvokeWithout("ATTACK")
                 );
@@ -103,9 +110,7 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("FALL"),
                 TranAttach.InvokeWithout("DASH"),
                 TranAttach.Or(
-                    TranAttach.And(
-                        TranAttach.InvokeWith("RUN"),
-                        TranAttach.InvokeWithout("C")),
+                    TranAttach.InvokeWith("RUN"),
                     TranAttach.InvokeWith("C")
                 ),
                 TranAttach.InvokeWithout("ATTACK"));
@@ -136,28 +141,28 @@ namespace HKHeroControl
                     )
                 ));
 
-            //上吼攻击
-            TranAttach.RegisterAction("ROAR", ActionChestShoot,
-                TranAttach.InvokeWithout("FIREBALL"),
-                TranAttach.InvokeWithout("ROAR"),
-                TranAttach.InvokeWithout("QUAKE"),
-                TranAttach.InvokeWithout("DASH")
-                //TranAttach.InvokeWithout("JUMP"),
-                //TranAttach.InvokeWithout("FALL"),
-                //TranAttach.InvokeWithout("RUN")
-                );
-            TranAttach.InvokeActionOn("ROAR", TranAttach.And(
-                DefaultActions.CastDownTest,
-                DefaultActions.UpTest,
-                TranAttach.Not(
-                    TranAttach.Or(
-                        DefaultActions.DownTest
-                        )
-                    )
-                ));
+            ////上吼攻击
+            //TranAttach.RegisterAction("ROAR", ActionChestShoot,
+            //    TranAttach.InvokeWithout("FIREBALL"),
+            //    TranAttach.InvokeWithout("ROAR"),
+            //    TranAttach.InvokeWithout("QUAKE"),
+            //    TranAttach.InvokeWithout("DASH")
+            //    //TranAttach.InvokeWithout("JUMP"),
+            //    //TranAttach.InvokeWithout("FALL"),
+            //    //TranAttach.InvokeWithout("RUN")
+            //    );
+            //TranAttach.InvokeActionOn("ROAR", TranAttach.And(
+            //    DefaultActions.CastDownTest,
+            //    DefaultActions.UpTest,
+            //    TranAttach.Not(
+            //        TranAttach.Or(
+            //            DefaultActions.DownTest
+            //            )
+            //        )
+            //    ));
 
             //下砸攻击
-            TranAttach.RegisterAction("QUAKE", GenPlume,
+            TranAttach.RegisterAction("QUAKE", ActionGenPlume,
                 TranAttach.InvokeWithout("FIREBALL"),
                 TranAttach.InvokeWithout("ROAR"),
                 TranAttach.InvokeWithout("QUAKE"),
@@ -277,10 +282,10 @@ namespace HKHeroControl
 
             for(int i = 0; i < repeat; ++i)
             {
-                float angle = (float)Range(100, 130) / 180f * (float)Math.PI;
-                float vx = (float)(speed * Math.Cos(angle));
+                float angle = (float)Range(10, 30) / 180f * (float)Math.PI;
+                float vx = (float)(speed * Math.Cos(angle)) * (faceRight ? 1 : -1);
                 float vy = (float)(speed * Math.Sin(angle));
-                smallShotBullet.Clone().SetPos(transform.position + new Vector3(-2f, 0, 0)).TranHeroAttack(AttackTypes.Spell, 40 / repeat)
+                smallShotBullet.Clone().SetPos(transform.position + new Vector3(2f * (faceRight ? 1 : -1), 0, 0)).TranHeroAttack(AttackTypes.Spell, 40 / repeat)
                     .GetComponent<Rigidbody2D>().velocity = new Vector2(vx, vy);
                 yield return new WaitForSeconds(duration / repeat);
             }
@@ -295,15 +300,40 @@ namespace HKHeroControl
             throw new NotImplementedException();
         }
 
-        IEnumerator GenPlume()
+        IEnumerator ActionGenPlume()
         {
+            rig.SetVY(50);
             animator.Play("Jump");
-            rig.SetVY(25);
-            yield return new WaitForSeconds(0.25f);
-            rig.SetVY(0);
-            yield return animator.PlayAnimWait("DStab Antic");
+            yield return new WaitForSeconds(0.3f);
+            rig.SetVY(-25);
             animator.Play("Dstab Stomp");
+
+            int[] off = new int[] { -10, -5, 0, 5, 10 };
+            GameObject[] gos = new GameObject[off.Length];
+            PlayMakerFSM[] fsms = new PlayMakerFSM[off.Length];
+            for (int i = 0; i < off.Length; i++)
+            {
+                gos[i] = plume.Clone();
+                new ColliderGameObject(gos[i], 1);
+                gos[i].SetActive(true);
+                gos[i].transform.position += new Vector3(off[i], 0, 0);
+                fsms[i] = gos[i].LocateMyFSM("Control");
+            }
+
+
+            foreach(var fsm in fsms) fsm.SetState("Plume 1");
+            yield return new WaitForSeconds(0.1f);
+            foreach (var fsm in fsms) fsm.SetState("Plume 2");
+            yield return new WaitForSeconds(0.1f);
+            foreach (var fsm in fsms) fsm.SetState("Plume 3");
+            yield return new WaitForSeconds(0.1f);
+            foreach (var fsm in fsms) fsm.SetState("Plume 4");
+            yield return new WaitForSeconds(0.1f);
+            foreach (var fsm in fsms) fsm.SetState("Scale Up");
             yield return new WaitForSeconds(0.5f);
+            foreach (var fsm in fsms) fsm.SetState("End");
+            yield return new WaitForSeconds(0.1f);
+
             animator.Play("DStab Land");
             yield break;
         }
@@ -312,6 +342,11 @@ namespace HKHeroControl
         IEnumerator ActionCounter()
         {
             isCounter = true;
+            if(TranAttach.IsActionInvoking("RUN"))
+            {
+                TranAttach.InvokeAction("ATTACK");
+                yield break;
+            }
             On.HeroController.TakeDamage -= _NoDamage;
             On.HeroController.TakeDamage += _NoDamage;
             yield return animator.PlayAnimWait("Counter Antic");
