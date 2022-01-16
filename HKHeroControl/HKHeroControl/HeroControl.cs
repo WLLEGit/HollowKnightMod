@@ -19,6 +19,7 @@ namespace HKHeroControl
     public class HeroControl : Mod
     {
         public GameObject GrimmGO = null;
+        public GameObject HKPrimeGO = null;
         public GameObject HKGO = null;
         public override List<(string, string)> GetPreloadNames()
         {
@@ -30,13 +31,14 @@ namespace HKHeroControl
         public override void Initialize(Dictionary<string, Dictionary<string, UnityEngine.GameObject>> preloadedObjects)
         {
             InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
+            //InitGameObject<HKPrimeCtrl>(in preloadedObjects, "HK Prime", out HKPrimeGO);
             //InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
         }
 
         private void ModHooks_HeroUpdateHook()
         {
-            PlayerData.instance.health = 11;
+            PlayerData.instance.health = 9;
             if(Input.GetKeyUp(KeyCode.F2))
             {
                 HKGO.SetActive(!HKGO.activeSelf);
@@ -67,8 +69,9 @@ namespace HKHeroControl
         }
         private readonly Dictionary<string, ConfigType> configs = new Dictionary<string, ConfigType>
         {
-            { "Hollow Knight", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")},
-            {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") }
+            { "HK Prime", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")},
+            {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
+            {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") }
         };
     }
 }
