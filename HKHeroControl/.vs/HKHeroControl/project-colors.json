@@ -20,7 +20,12 @@
       "ProjectGuid": "43531c64-94b1-47ac-a56c-cbf5ec256d21",
       "DisplayName": "Hornet",
       "ColorIndex": 2
+    },
+    "445a3aa1-a66b-4ade-8663-ae6f6912f77e": {
+      "ProjectGuid": "445a3aa1-a66b-4ade-8663-ae6f6912f77e",
+      "DisplayName": "HollowKnightPrime",
+      "ColorIndex": 3
     }
   },
-  "NextColorIndex": 3
+  "NextColorIndex": 4
 }

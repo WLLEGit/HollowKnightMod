@@ -59,7 +59,6 @@ D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\Asse
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.TextRenderingModule.xml
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.AudioModule.xml
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.AnimationModule.xml
-D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.ParticleSystemModule.xml
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.VideoModule.xml
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.IMGUIModule.xml
 D:\Code\C#\HollowKnight-Modding\MyMod\HKHeroControl\HKHeroControl\bin\Debug\UnityEngine.UnityWebRequestWWWModule.xml

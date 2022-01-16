@@ -50,19 +50,6 @@ namespace HKHeroControl
         {
             PlayMakerFSM control = gameObject.LocateMyFSM("Control");
 
-            // 查询Grimm所有需要的组件
-            //for (int i = 1; i <= 17; i++)
-            //{
-            //    spikes.Append(transform.Find($"Grimm Spike ({i})").gameObject.Clone().TranHeroAttack(AttackTypes.Nail, 4)
-            //                    .SetParent(null));
-            //    GameObject spike = spikes[i - 1];
-            //    DontDestroyOnLoad(spike);
-            //    spike.SetActive(false);
-            //    foreach(var s in spikes)
-            //        Modding.Logger.Log(s.ToString());
-
-            //}
-
             // 处理状态机和触发器
             foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v); //销毁现有状态机组件
             animator = GetComponent<tk2dSpriteAnimator>();

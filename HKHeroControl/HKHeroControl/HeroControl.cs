@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Modding;
 using UnityEngine;
+using ModCommon.Util;
 
 #region Acknowledgement
 /// <summary>
@@ -17,10 +18,8 @@ namespace HKHeroControl
 {
     public class HeroControl : Mod
     {
-        public GameObject FalseKnightGO = null;
         public GameObject GrimmGO = null;
         public GameObject HKGO = null;
-        public GameObject GrimmchildGO = null;
         public override List<(string, string)> GetPreloadNames()
         {
             var res = new List<(string, string)>();
@@ -30,28 +29,21 @@ namespace HKHeroControl
         }
         public override void Initialize(Dictionary<string, Dictionary<string, UnityEngine.GameObject>> preloadedObjects)
         {
-            //InitGameObject<FalseKnightCtrl>(in preloadedObjects, "FalseKnight", out FalseKnightGO);
-            //InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
-            InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
+            InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
+            //InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
         }
 
         private void ModHooks_HeroUpdateHook()
         {
-            if(GrimmchildGO != null)
+            PlayerData.instance.health = 11;
+            if(Input.GetKeyUp(KeyCode.F2))
             {
-                FSMUtility.SendEventToGameObject(GrimmchildGO, "BENCHREST END");    //keep Gimmchild awake
-            }
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                FindGrimmchild();
-                GrimmGO.SetActive(!GrimmGO.activeSelf);
+                HKGO.SetActive(!HKGO.activeSelf);
             }
         }
-        private void FindGrimmchild()
-        {
-            GrimmchildGO = GameObject.Find("Grimmchild(Clone)");
-        }
+
+
         private void InitGameObject<T>(in Dictionary<string, Dictionary<string, GameObject>> preloadedObjects, string name, out GameObject go) where T : Component
         {
             var config = configs[name];
@@ -75,9 +67,8 @@ namespace HKHeroControl
         }
         private readonly Dictionary<string, ConfigType> configs = new Dictionary<string, ConfigType>
         {
-            //{"FalseKnight", new ConfigType("GG_False_Knight", "") },
-            {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
-            //{ "Hollow Knight", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")}
+            { "Hollow Knight", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")},
+            {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") }
         };
     }
 }

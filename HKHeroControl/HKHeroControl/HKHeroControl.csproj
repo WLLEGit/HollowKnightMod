@@ -73,10 +73,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FalseKnightCtrl.cs" />
+    <Compile Include="ColliderGameObject.cs" />
     <Compile Include="GrimmCtrl.cs" />
     <Compile Include="HeroControl.cs" />
     <Compile Include="HollowKnightCtrl.cs" />
+    <Compile Include="MPGetter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
