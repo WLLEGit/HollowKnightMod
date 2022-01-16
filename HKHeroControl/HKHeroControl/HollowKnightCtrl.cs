@@ -10,6 +10,7 @@ using ModCommon.Util;
 using System;
 using ModCommon;
 using static UnityEngine.Random;
+using Modding;
 
 namespace HKHeroControl
 {
@@ -44,13 +45,11 @@ namespace HKHeroControl
             Destroy(GetComponent<EnemyDeathEffects>());
 
 
-            TranAttach.RegisterAction("M1", defaultActions.MoveHeroTo);
+            TranAttach.RegisterAction("M1", ActionMoveHeroTo);
             TranAttach.InvokeActionOn("M1", defaultActions.MoveHeroToTest);
-            TranAttach.RegisterAction("M2", defaultActions.MoveTranToHero);
+            TranAttach.RegisterAction("M2", ActionMoveTranToHero);
             TranAttach.InvokeActionOn("M2", defaultActions.MoveTranToHeroTest);
-            //TranAttach.RegisterAction("M3", defaultActions.SetTranScale);
-            //TranAttach.InvokeActionOn("M3", DefaultActions.AlwaysTrue);
-            TranAttach.RegisterAction("TURN", defaultActions.Turn);
+            TranAttach.RegisterAction("TURN", ActionTurn);
             TranAttach.InvokeActionOn("TURN", DefaultActions.TurnTest);
 
             TranAttach.RegisterAction("JUMP", ActionJump,
@@ -73,6 +72,8 @@ namespace HKHeroControl
 
             TranAttach.RegisterAction("RUN", ActionRun,
                 TranAttach.InvokeWithout("DASH"),
+                TranAttach.InvokeWithout("QUAKE"),
+                TranAttach.InvokeWithout("ATTACK"),
                 TranAttach.InvokeWithout("RUN"));
             TranAttach.InvokeActionOn("RUN", DefaultActions.RunTest);
 
@@ -101,8 +102,12 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("JUMP"),
                 TranAttach.InvokeWithout("FALL"),
                 TranAttach.InvokeWithout("DASH"),
-                TranAttach.InvokeWithout("RUN"),
-                TranAttach.InvokeWith("C"),
+                TranAttach.Or(
+                    TranAttach.And(
+                        TranAttach.InvokeWith("RUN"),
+                        TranAttach.InvokeWithout("C")),
+                    TranAttach.InvokeWith("C")
+                ),
                 TranAttach.InvokeWithout("ATTACK"));
 
             //冲刺攻击
@@ -152,7 +157,7 @@ namespace HKHeroControl
                 ));
 
             //下砸攻击
-            TranAttach.RegisterAction("QUAKE", ActionPuppetSlam,
+            TranAttach.RegisterAction("QUAKE", GenPlume,
                 TranAttach.InvokeWithout("FIREBALL"),
                 TranAttach.InvokeWithout("ROAR"),
                 TranAttach.InvokeWithout("QUAKE"),
@@ -170,6 +175,32 @@ namespace HKHeroControl
                         )
                     )
                 ));
+
+        }
+
+        bool faceRight = false;
+        private IEnumerator ActionTurn()
+        {
+            faceRight = DefaultActions.RightTest();
+            if (!faceRight)
+                HeroController.instance.FaceRight();
+            else
+                HeroController.instance.FaceLeft();
+            yield break;
+        }
+
+        private IEnumerator ActionMoveTranToHero()
+        {
+            rig.transform.localScale = HeroController.instance.transform.localScale;
+            rig.transform.position = HeroController.instance.transform.position;
+            yield break;
+        }
+
+        private IEnumerator ActionMoveHeroTo()
+        {
+            rig.transform.localScale = HeroController.instance.transform.localScale;
+            HeroController.instance.transform.position = rig.transform.position;
+            yield break;
         }
 
         private IEnumerator ActionIdle()
@@ -180,43 +211,55 @@ namespace HKHeroControl
 
         void Update()
         {
+            if(Input.GetKey(KeyCode.Alpha1))
+            {
+                Log($"Actions cnt {TranAttach.InvokeCount}: {string.Join(" ", TranAttach.curActs)}");
+                Log($"is falling: {defaultActions.FallTest()}");
+            }
         }
 
         private IEnumerator ActionRun()
         {
-            if (!TranAttach.IsActionInvoking("FALL") && !TranAttach.IsActionInvoking("JUMP")
-                    && !TranAttach.IsActionInvoking("ATTACK"))
+
+            if(TranAttach.IsActionInvoking("FALL") || TranAttach.IsActionInvoking("JUMP") || TranAttach.IsActionInvoking("FIREBALL"))
             {
-                animator.Play("Walk");
-                rig.SetVX(0.5f * (
-                    HeroController.instance.cState.facingRight ?
+                rig.SetVX(
+                    faceRight ?
                     HeroController.instance.RUN_SPEED_CH_COMBO :
                     -HeroController.instance.RUN_SPEED_CH_COMBO
-                    ));
+                    );
                 yield return null;
             }
             else
             {
-                rig.SetVX(
-                    HeroController.instance.cState.facingRight ?
+                animator.Play("Walk");
+                rig.SetVX(0.5f * (
+                    faceRight ?
                     HeroController.instance.RUN_SPEED_CH_COMBO :
                     -HeroController.instance.RUN_SPEED_CH_COMBO
-                    );
+                    ));
                 yield return null;
             }
         }
 
         IEnumerator ActionSlash()
         {
-            slashCollider.AttackAntic();
-            rig.SetVX(HeroController.instance.DASH_SPEED);
+            rig.gravityScale = 0;
+            rig.velocity = new Vector2(0, 0);
+            HeroController.instance.SetDamageMode(1);
+
             yield return animator.PlayAnimWait("Slash1 Antic");
+            slashCollider.AttackAntic();
+            rig.SetVX(HeroController.instance.DASH_SPEED * (faceRight ? 1 : -1));
             yield return animator.PlayAnimWait("Slash1");
             yield return animator.PlayAnimWait("Slash1 Recover");
             yield return animator.PlayAnimWait("Slash2");
             yield return animator.PlayAnimWait("Slash2 Recover");
             yield return animator.PlayAnimWait("Slash3");
+
             rig.SetVX(0);
+            HeroController.instance.SetDamageMode(0);
+            rig.gravityScale = 1;
             yield return animator.PlayAnimWait("Recover");
             slashCollider.CancelAttack();
         }
@@ -252,9 +295,17 @@ namespace HKHeroControl
             throw new NotImplementedException();
         }
 
-        IEnumerator ActionPuppetSlam()
+        IEnumerator GenPlume()
         {
-            throw new NotImplementedException();
+            animator.Play("Jump");
+            rig.SetVY(25);
+            yield return new WaitForSeconds(0.25f);
+            rig.SetVY(0);
+            yield return animator.PlayAnimWait("DStab Antic");
+            animator.Play("Dstab Stomp");
+            yield return new WaitForSeconds(0.5f);
+            animator.Play("DStab Land");
+            yield break;
         }
 
         bool isCounter = false;
