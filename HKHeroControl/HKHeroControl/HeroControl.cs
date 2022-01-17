@@ -21,6 +21,9 @@ namespace HKHeroControl
         public GameObject GrimmGO = null;
         public GameObject HKPrimeGO = null;
         public GameObject HKGO = null;
+
+        GameObject curGO = null;
+        GameObject nextGO = null;
         public override List<(string, string)> GetPreloadNames()
         {
             var res = new List<(string, string)>();
@@ -32,20 +35,49 @@ namespace HKHeroControl
         {
             InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
             //InitGameObject<HKPrimeCtrl>(in preloadedObjects, "HK Prime", out HKPrimeGO);
-            //InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
+            InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
+            InitChoices();
+
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
         }
 
         private void ModHooks_HeroUpdateHook()
         {
-            PlayerData.instance.health = 9;
-            if(Input.GetKeyUp(KeyCode.F2))
+            foreach(var (key, val) in switchChoices)
             {
-                HKGO.SetActive(!HKGO.activeSelf);
+                if(Input.GetKeyDown(key))
+                {
+                    nextGO = val;
+                    break;
+                }
+            }
+
+            if(Input.GetKeyDown(KeyCode.Space))
+            {
+                if(nextGO != null)
+                {
+                    curGO?.SetActive(false);
+                    curGO = nextGO;
+                    nextGO = null;
+                    curGO.SetActive(true);
+                }
+                else
+                {
+                    curGO?.SetActive(false);
+                    nextGO = curGO;
+                    curGO = null;
+                }
             }
         }
 
-
+        private void InitChoices()
+        {
+            switchChoices = new Dictionary<KeyCode, GameObject>
+            {
+                { KeyCode.F1 , HKGO},
+                {KeyCode.F2, GrimmGO },
+            };
+        }
         private void InitGameObject<T>(in Dictionary<string, Dictionary<string, GameObject>> preloadedObjects, string name, out GameObject go) where T : Component
         {
             var config = configs[name];
@@ -73,5 +105,7 @@ namespace HKHeroControl
             {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
             {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") }
         };
+
+        private Dictionary<KeyCode, GameObject> switchChoices;
     }
 }

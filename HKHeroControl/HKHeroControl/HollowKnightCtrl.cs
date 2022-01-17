@@ -225,8 +225,8 @@ namespace HKHeroControl
 
         private IEnumerator ActionRun()
         {
-
-            if(TranAttach.IsActionInvoking("FALL") || TranAttach.IsActionInvoking("JUMP") || TranAttach.IsActionInvoking("FIREBALL"))
+            if(TranAttach.IsActionInvoking("FALL") || TranAttach.IsActionInvoking("JUMP") 
+                || TranAttach.IsActionInvoking("FIREBALL") || TranAttach.IsActionInvoking("C"))
             {
                 rig.SetVX(
                     faceRight ?
@@ -271,6 +271,7 @@ namespace HKHeroControl
 
         IEnumerator ActionSmallShoot()
         {
+            HeroController.instance.AddHealth(1);
             const float duration = 1.5f;
             const int repeat = 7;
             const float speed = 25f;
@@ -282,7 +283,7 @@ namespace HKHeroControl
 
             for(int i = 0; i < repeat; ++i)
             {
-                float angle = (float)Range(10, 30) / 180f * (float)Math.PI;
+                float angle = (float)Range(10, 50) / 180f * (float)Math.PI;
                 float vx = (float)(speed * Math.Cos(angle)) * (faceRight ? 1 : -1);
                 float vy = (float)(speed * Math.Sin(angle));
                 smallShotBullet.Clone().SetPos(transform.position + new Vector3(2f * (faceRight ? 1 : -1), 0, 0)).TranHeroAttack(AttackTypes.Spell, 40 / repeat)
@@ -345,7 +346,6 @@ namespace HKHeroControl
             if(TranAttach.IsActionInvoking("RUN"))
             {
                 TranAttach.InvokeAction("ATTACK");
-                yield break;
             }
             On.HeroController.TakeDamage -= _NoDamage;
             On.HeroController.TakeDamage += _NoDamage;
@@ -372,7 +372,7 @@ namespace HKHeroControl
         {
             yield return animator.PlayAnimWait("Antic");
             animator.Play("Jump");
-            rig.SetVY(25);
+            rig.SetVY(30);
             yield return new WaitForSeconds(0.25f);
         }
 
