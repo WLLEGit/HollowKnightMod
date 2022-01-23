@@ -13,6 +13,7 @@ namespace HKHeroControl
     internal class ColliderGameObject
     {
         readonly GameObject gameObject = null;
+        DecorationEffects effects = null;
 
         public ColliderGameObject(PlayMakerFSM control, string objName, int damage = 21)
             : this(control.FsmVariables.FindFsmGameObject(objName).Value, damage) { }
@@ -28,16 +29,50 @@ namespace HKHeroControl
             gameObject.TranHeroAttack(AttackTypes.Nail, damage);
         }
 
+        public void SetDecorations(GameObject[] gos)
+        {
+            effects = new DecorationEffects(gos);
+        }
         public void AttackAntic()
         {
+            effects?.SetActive();
             gameObject.SetActive(true);
-            //gameObject.GetComponent<tk2dSpriteAnimator>().Play("Overhead Slash");
         }
 
         public void CancelAttack()
         {
-            //gameObject.GetComponent<tk2dSpriteAnimator>().StopAndResetFrame();
+            effects?.DeActivate();
             gameObject.SetActive(false);
+        }
+
+        public int SetAttack(int amount)
+        {
+            DamageEnemies damageEnemies = gameObject.AddComponent<DamageEnemies>();
+            int tmp = damageEnemies.damageDealt;
+            damageEnemies.damageDealt = amount;
+            return tmp;
+        }
+
+    }
+
+    internal class DecorationEffects
+    {
+        GameObject[] gos;
+        public DecorationEffects(GameObject[] gos)
+        {
+            this.gos = gos;
+        }
+
+        public void SetActive()
+        {
+            foreach (GameObject g in this.gos)
+                g.SetActive(true);
+        }
+
+        public void DeActivate()
+        {
+            foreach (GameObject g in this.gos)
+                g.SetActive(false);
         }
     }
 }
