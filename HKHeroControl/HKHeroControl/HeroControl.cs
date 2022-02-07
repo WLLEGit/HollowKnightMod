@@ -21,6 +21,7 @@ namespace HKHeroControl
         public GameObject GrimmGO = null;
         public GameObject HKGO = null;
         public GameObject SlyGO = null;
+        public GameObject RadianceGO = null;
 
         GameObject curGO = null;
         GameObject nextGO = null;
@@ -36,6 +37,7 @@ namespace HKHeroControl
             InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
             InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
             InitGameObject<SlyCtrl>(in preloadedObjects, "Sly", out SlyGO);
+            InitGameObject<RadianceCtrl>(in preloadedObjects, "Radiance", out RadianceGO);
             InitChoices();
 
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
@@ -70,8 +72,11 @@ namespace HKHeroControl
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.F12))
+            if(Input.GetKeyDown(KeyCode.F11))
+            {
                 isDbgLockHealth = !isDbgLockHealth;
+                Log($"Lock Health: {isDbgLockHealth}");
+            }
             if (isDbgLockHealth)
                 PlayerData.instance.health = 11;
         }
@@ -83,6 +88,7 @@ namespace HKHeroControl
                 { KeyCode.F1, HKGO},
                 { KeyCode.F2, GrimmGO },
                 { KeyCode.F3, SlyGO },
+                { KeyCode.F4, RadianceGO },
             };
         }
         private void InitGameObject<T>(in Dictionary<string, Dictionary<string, GameObject>> preloadedObjects, string name, out GameObject go) where T : Component
@@ -111,7 +117,8 @@ namespace HKHeroControl
             //{ "HK Prime", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")},
             {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
             {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") },
-            {"Sly", new ConfigType("GG_Sly", "Battle Scene/Sly Boss") }
+            {"Sly", new ConfigType("GG_Sly", "Battle Scene/Sly Boss") },
+            {"Radiance", new ConfigType("GG_Radiance", "Boss Control/Absolute Radiance") }
         };
 
         private Dictionary<KeyCode, GameObject> switchChoices;

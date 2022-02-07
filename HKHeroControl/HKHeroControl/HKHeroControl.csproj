@@ -79,6 +79,7 @@
     <Compile Include="HollowKnightCtrl.cs" />
     <Compile Include="MPGetter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RadianceCtrl.cs" />
     <Compile Include="SlyCtrl.cs" />
   </ItemGroup>
   <ItemGroup>
