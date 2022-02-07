@@ -70,27 +70,29 @@ namespace HKHeroControl
                 ));
             TranAttach.InvokeActionOn("IDLE", DefaultActions.AlwaysTrue);
 
-            //普通攻击
+            //普通攻击->单个光剑（八向控制）
             TranAttach.RegisterAction("ATTACK", ActionSingleNail,
                 TranAttach.InvokeWithout("DASH"),
                 TranAttach.InvokeWithout("ATTACK"),
-                TranAttach.InvokeWithout("FIREBALL")
+                TranAttach.InvokeWithout("FIREBALL"),
+                TranAttach.InvokeWithout("JUMP"),
+                TranAttach.InvokeWithout("DREAMNAIL")
                 );
             TranAttach.InvokeActionOn("ATTACK", DefaultActions.AttackTest);
 
-            //冲刺攻击
+            //冲刺攻击->八向激光*3
             TranAttach.RegisterAction("DASH", ActionEyeBeamBurst,
                 TranAttach.InvokeWithout("DASH")
                 );
             TranAttach.InvokeActionOn("DASH", DefaultActions.DashTest);
 
-            //法球攻击
+            //法球攻击->光剑组
             TranAttach.RegisterAction("FIREBALL", ActionNailComb,
                 TranAttach.InvokeWithout("FIREBALL")
                 );
             TranAttach.InvokeActionOn("FIREBALL", DefaultActions.CastDownTest);
 
-            //跳跃->瞬移
+            //跳跃->瞬移（八向）
             TranAttach.RegisterAction("JUMP", ActionTele,
                 TranAttach.InvokeWithout("JUMP")
                 );
@@ -101,12 +103,31 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("DREAMNAIL")
                 );
             TranAttach.InvokeActionOn("DREAMNAIL", DreamNailTest);
+
+            //水晶冲刺->回血
+            TranAttach.RegisterAction("SUPERDASH", ActionHeal,
+                TranAttach.InvokeWithout("SUPERDASH")
+                );
+            TranAttach.InvokeActionOn("SUPERDASH", SuperDashTest);
+        }
+
+        private IEnumerator ActionHeal()
+        {
+            animator.Play("Cast");
+            HeroController.instance.AddHealth(1);
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        private bool SuperDashTest()
+        {
+            return InputHandler.Instance.inputActions.superDash;
         }
 
         private bool DreamNailTest()
         {
             return InputHandler.Instance.inputActions.dreamNail;
         }
+
 
         private IEnumerator ActionTele()
         {
@@ -155,27 +176,27 @@ namespace HKHeroControl
         void Update()
         {
 
-            if (Input.GetKeyDown(KeyCode.Alpha0))
-            {
-                BossSequenceDoor.Completion completion = new BossSequenceDoor.Completion()
-                {
-                    canUnlock = true,
-                    unlocked = true,
-                    completed = true,
-                    allBindings = false,
-                    noHits = false,
-                    boundNail = false,
-                    boundShell = false,
-                    boundCharms = false,
-                    boundSoul = false,
-                    viewedBossSceneCompletions = new List<string>()
-                };
-                Log("set complete");
-                PlayerData.instance.bossDoorStateTier1 = completion;
-                PlayerData.instance.bossDoorStateTier2 = completion;
-                PlayerData.instance.bossDoorStateTier3 = completion;
-                PlayerData.instance.bossDoorStateTier4 = completion;
-            }
+            //if (Input.GetKeyDown(KeyCode.Alpha0))
+            //{
+            //    BossSequenceDoor.Completion completion = new BossSequenceDoor.Completion()
+            //    {
+            //        canUnlock = true,
+            //        unlocked = true,
+            //        completed = true,
+            //        allBindings = false,
+            //        noHits = false,
+            //        boundNail = false,
+            //        boundShell = false,
+            //        boundCharms = false,
+            //        boundSoul = false,
+            //        viewedBossSceneCompletions = new List<string>()
+            //    };
+            //    Log("set complete");
+            //    PlayerData.instance.bossDoorStateTier1 = completion;
+            //    PlayerData.instance.bossDoorStateTier2 = completion;
+            //    PlayerData.instance.bossDoorStateTier3 = completion;
+            //    PlayerData.instance.bossDoorStateTier4 = completion;
+            //}
             //if (Input.GetKey(KeyCode.Alpha1))
             //{
             //    Log($"Actions cnt {TranAttach.InvokeCount}: {string.Join(" ", TranAttach.curActs)}");

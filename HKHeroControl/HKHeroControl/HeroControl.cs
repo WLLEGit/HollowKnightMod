@@ -72,13 +72,13 @@ namespace HKHeroControl
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.F11))
-            {
-                isDbgLockHealth = !isDbgLockHealth;
-                Log($"Lock Health: {isDbgLockHealth}");
-            }
-            if (isDbgLockHealth)
-                PlayerData.instance.health = 11;
+            //if(Input.GetKeyDown(KeyCode.F11))
+            //{
+            //    isDbgLockHealth = !isDbgLockHealth;
+            //    Log($"Lock Health: {isDbgLockHealth}");
+            //}
+            //if (isDbgLockHealth)
+            //    PlayerData.instance.health = 11;
         }
 
         private void InitChoices()
