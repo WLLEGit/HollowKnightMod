@@ -18,6 +18,7 @@ namespace HKHeroControl
 {
     public class HeroControl : Mod
     {
+        public static Dictionary<string, Dictionary<string, UnityEngine.GameObject>>  PreloadGameObjects;
         public GameObject GrimmGO = null;
         public GameObject HKGO = null;
         public GameObject SlyGO = null;
@@ -34,6 +35,7 @@ namespace HKHeroControl
         }
         public override void Initialize(Dictionary<string, Dictionary<string, UnityEngine.GameObject>> preloadedObjects)
         {
+            PreloadGameObjects = preloadedObjects;
             InitGameObject<HollowKnightCtrl>(in preloadedObjects, "Hollow Knight", out HKGO);
             InitGameObject<GrimmCtrl>(in preloadedObjects, "Grimm", out GrimmGO);
             InitGameObject<SlyCtrl>(in preloadedObjects, "Sly", out SlyGO);
@@ -118,7 +120,8 @@ namespace HKHeroControl
             {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
             {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") },
             {"Sly", new ConfigType("GG_Sly", "Battle Scene/Sly Boss") },
-            {"Radiance", new ConfigType("GG_Radiance", "Boss Control/Absolute Radiance") }
+            {"Radiance", new ConfigType("GG_Radiance", "Boss Control/Absolute Radiance") },
+            //{"Radiance Beam Sweeper", new ConfigType("GG_Radiance","Boss Control/Beam Sweeper") },
         };
 
         private Dictionary<KeyCode, GameObject> switchChoices;

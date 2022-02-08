@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HKHeroControl", "HKHeroControl\HKHeroControl.csproj", "{CE411193-A9D6-4F8F-BF4F-9F412614AAB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TranCore", "..\..\reference\Hornet-SRC\TranCore\TranCore.csproj", "{C75D37ED-4B10-4230-9E10-44D26C9F651B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TranCore", "..\TranCore\TranCore.csproj", "{C75D37ED-4B10-4230-9E10-44D26C9F651B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

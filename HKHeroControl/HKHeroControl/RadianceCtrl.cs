@@ -29,6 +29,7 @@ namespace HKHeroControl
         GameObject eyeBeamGlow = null;                  //八向激光 
         GameObject[] eyeBeamBursts = new GameObject[3]; //三组
 
+        const int nailAttack = 63;
         void Awake()
         {
             TranAttach.AutoDis = false;
@@ -44,10 +45,12 @@ namespace HKHeroControl
             }
 
             radiantNailComb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("TL")[0].gameObject.Value;
+            
             radiantNail = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("CW Spawn")[0].gameObject.Value;
-            radiantNail.TranHeroAttack(AttackTypes.Nail, 7);
+            radiantNail.TranHeroAttack(AttackTypes.Nail, nailAttack);
+            
             radiantOrb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("Spawn Fireball")[0].gameObject.Value;
-            radiantOrb.FindGameObjectInChildren("Hero Hurter").TranHeroAttack(AttackTypes.Nail, 21);
+            radiantOrb.FindGameObjectInChildren("Hero Hurter").TranHeroAttack(AttackTypes.Spell, nailAttack);
 
             foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v);
             Destroy(GetComponent<EnemyDeathEffects>());
@@ -109,6 +112,17 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("SUPERDASH")
                 );
             TranAttach.InvokeActionOn("SUPERDASH", SuperDashTest);
+
+            //向下看->扇形剑雨
+            TranAttach.RegisterAction("LOOKDOWN", ActionFanAttack,
+                TranAttach.InvokeWithout("LOOKDOWN")
+                );
+            TranAttach.InvokeActionOn("LOOKDOWN", RSDownTest);
+        }
+
+        private bool RSDownTest()
+        {
+            return InputHandler.Instance.inputActions.rs_down;
         }
 
         private IEnumerator ActionHeal()
@@ -132,7 +146,7 @@ namespace HKHeroControl
         private IEnumerator ActionTele()
         {
             GetDXY(out int dx, out int dy);
-            if(dx == 0 && dy == 0)
+            if (dx == 0 && dy == 0)
                 yield break;
             float x = (float)(dx / Math.Sqrt(dx * dx + dy * dy)) * HeroController.instance.RUN_SPEED / 2;
             float y = (float)(dy / Math.Sqrt(dx * dx + dy * dy)) * HeroController.instance.RUN_SPEED / 2;
@@ -253,7 +267,7 @@ namespace HKHeroControl
             animator.Play("Cast");
             yield return new WaitForSeconds(0.75f);
             //yield return animator.PlayAnimWait("Recover");
-            yield return new WaitForSeconds(0.35f);
+            //yield return new WaitForSeconds(0.35f);
         }
 
         IEnumerator ActionEyeBeamBurst()
@@ -277,34 +291,53 @@ namespace HKHeroControl
         {
             int combType = (int)dir;
             GameObject attackGO = radiantNailComb.Clone();
+            attackGO.SetActive(false);
+            int dx, dy;
+            switch (dir)
+            {
+                case CombDir.COMBLT:
+                    dx = -10; dy = 10; break;
+                case CombDir.COMBRT:
+                    dx = 10; dy = 10; break;
+                case CombDir.COMBT:
+                    dx = 0; dy = 10; break;
+                case CombDir.COMBR:
+                    dx = 15; dy = 0; break;
+                case CombDir.COMBL:
+                    dx = -15; dy = 0; break;
+                default:
+                    dx = 0; dy = 0; break;
+            }
 
             attackGO.SetActive(true);
             attackGO.LocateMyFSM("Control").FsmVariables.FindFsmInt("Type").Value = combType;
 
             yield return new WaitForSeconds(0.01f); //等待实际nail的生成
+            attackGO.transform.position = transform.position + new Vector3(dx, dy, 0);
+
             GameObject nails = attackGO.FindGameObjectInChildren("Nails");
             foreach (var tran in nails.GetComponentsInChildren<Transform>())
             {
-                tran.gameObject.TranHeroAttack(AttackTypes.Nail, 5);
+                tran.gameObject.TranHeroAttack(AttackTypes.Nail, nailAttack);
             }
         }
 
         IEnumerator ActivateEyeBeamBurst(int i, float rotation)
         {
-            List<string> postfixs = new List<string> { "" };
-            for (int j = 1; j <= 7; ++j) postfixs.Add($" ({j})");
-
             GameObject burst = eyeBeamBursts[i];
             burst.transform.Rotate(0, 0, rotation);
             burst.SetActive(true);
 
             List<GameObject> beams = new List<GameObject>();
+            List<string> postfixs = new List<string> { "" };
+            for (int j = 1; j <= 7; ++j) postfixs.Add($" ({j})");
             foreach (string postfix in postfixs)
             {
-                GameObject go = burst.FindGameObjectInChildren("Radiant Beam" + postfix);
-                go.TranHeroAttack(AttackTypes.Nail, 1);
+                GameObject go = eyeBeamBursts[i].FindGameObjectInChildren("Radiant Beam" + postfix);
                 beams.Add(go);
+                go.TranHeroAttack(AttackTypes.Nail, nailAttack);
             }
+
             foreach (var beam in beams) FSMUtility.SendEventToGameObject(beam, "ANTIC");
             yield return new WaitForSeconds(0.425f);
             foreach (var beam in beams) FSMUtility.SendEventToGameObject(beam, "FIRE");
@@ -315,13 +348,46 @@ namespace HKHeroControl
 
         IEnumerator ActionOrbAttack()
         {
-            for (int i = 0; i < 3; ++i)
+            GameObject[] orbs = new GameObject[8];
+            float baseA = Range(0, 45);
+            for(int i = 0; i < 8; ++i)
             {
-                GameObject attackObj = radiantOrb.Clone();
-                attackObj.transform.position = transform.position + new Vector3(Range(-30, 30), Range(-10, 10), 0);
-                attackObj.GetComponent<Rigidbody2D>().velocity = new Vector2(Range(-5, 5), Range(-5, 5));
-                FSMUtility.SendEventToGameObject(attackObj, "FIRE");
-                yield return new WaitForSeconds(0.75f);
+                orbs[i] = radiantOrb.Clone();
+                orbs[i].SetActive(true);
+                float angle = (float)(baseA + 45 * i * Math.PI / 180);
+                float x = 8 * (float)Math.Cos(angle), y = 8 * (float)Math.Sin(angle);
+                orbs[i].transform.position = transform.position + new Vector3(x, y, 0);
+                FSMUtility.SendEventToGameObject(orbs[i], "FIRE");
+            }
+            yield return new WaitForSeconds(0.55f);
+        }
+
+        IEnumerator ActionFanAttack()
+        {
+            GameObject[] attackObjs = new GameObject[12];
+            animator.Play("Cast");
+            float baseA = Range(0, 30);
+            for (int i = 0; i < 12; ++i)
+            {
+                GameObject attackObj = radiantNail.Clone();
+                attackObj.SetActive(true);
+                float angle = (float)(baseA + 30 * i);
+                attackObj.transform.Rotate(0, 0, angle - 90);
+                attackObj.transform.position = transform.position + new Vector3(0, 1, 0);
+                    new Vector3((float)(2 * Math.Cos(angle * Math.PI / 180)), (float)(2 * Math.Sin(angle * Math.PI / 180)), 0);
+                attackObjs[i] = attackObj;
+                FSMUtility.SendEventToGameObject(attackObj, "FAN ANTIC");
+                yield return new WaitForSeconds(0.075f);
+            }
+            yield return new WaitForSeconds(0.25f);
+            for (int i = 0; i < 12; ++i)
+            {
+                FSMUtility.SendEventToGameObject(attackObjs[i], "FAN ATTACK CW");
+            }
+            yield return null;
+            for (int i = 0; i < 12; ++i)
+            {
+                FSMUtility.SendEventToGameObject(attackObjs[i], "DOWN");
             }
         }
 
