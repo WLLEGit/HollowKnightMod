@@ -4,13 +4,9 @@ using UnityEngine;
 using TranCore;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Modding;
 using static Modding.Logger;
 using System.Collections.Generic;
-using ModCommon.Util;
-using System;
-using ModCommon;
-using static UnityEngine.Random;
-using Modding;
 
 namespace HKHeroControl
 {
@@ -21,50 +17,68 @@ namespace HKHeroControl
         Rigidbody2D rig = null;
         DefaultActions defaultActions = null;
 
-        GameObject smallShotBullet = null;
-        GameObject hkCollider = null;
-        ColliderGameObject slashCollider = null;
+        GameObject[] spikes = null;    // 17个地刺
 
-        GameObject plume = null;
+        void OnCollisionEnter2D(Collision2D collision) => OnCollisionStay2D(collision);
+        void OnCollisionStay2D(Collision2D collision)
+        {
+            //HealthManager hm = collision.gameObject.GetComponent<HealthManager>() ??
+            //            collision.otherCollider.GetComponent<HealthManager>();
+            //if (hm != null)
+            //{
+
+            //    if (collisionActions.Select(e => TranAttach.IsActionInvoking(e)).ToList().Any())
+            //    {
+
+            //        hm.Hit(new HitInstance()
+            //        {
+            //            AttackType = AttackTypes.SharpShadow,
+            //            Source = gameObject,
+            //            DamageDealt = PlayerData.instance.nailDamage,
+            //            Multiplier = 1,
+            //            MagnitudeMultiplier = 1,
+            //            CircleDirection = true,
+            //            IgnoreInvulnerable = false
+            //        });
+            //        FSMUtility.SendEventToGameObject(hm.gameObject, "TOOK DAMAGE");
+            //        FSMUtility.SendEventToGameObject(hm.gameObject, "TAKE DAMAGE");
+            //    }
+            //}
+        }
 
         void Awake()
         {
-            TranAttach.AutoDis = false;
-            animator = gameObject.GetComponent<tk2dSpriteAnimator>();
-            rig = gameObject.GetComponent<Rigidbody2D>();
+            PlayMakerFSM control = gameObject.LocateMyFSM("Control");
+
+            // 处理状态机和触发器
+            foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v); //销毁现有状态机组件
+            animator = GetComponent<tk2dSpriteAnimator>();
+            rig = GetComponent<Rigidbody2D>();
             defaultActions = new DefaultActions(animator, rig);
 
-            smallShotBullet = gameObject.GetFSMActionsOnState<FlingObjectsFromGlobalPoolTime>("SmallShot HighLow")[0].gameObject.Value;
+            TranAttach.AutoDis = false;
+            //初始化
+            TranAttach.RegisterAction("INITOBJ", InitObj);
+            TranAttach.InvokeActionOn("INITOBJ", DefaultActions.AlwaysTrue);
 
-            plume = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("Plume Gen")[0].gameObject.Value;
-
-
-            //借用Stun碰撞箱作为Hollow Knight的整体碰撞箱
-            hkCollider = gameObject.FindGameObjectInChildren("Counter");
-            Destroy(hkCollider.GetComponent<DamageHero>());
-            hkCollider.SetActive(true);
-
-            slashCollider = new ColliderGameObject(gameObject.FindGameObjectInChildren("Slash"));   //攻击时的碰撞箱
-
-            foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v);
-            Destroy(GetComponent<EnemyDeathEffects>());
-
-
-            TranAttach.RegisterAction("M1", ActionMoveHeroTo);
+            //基础移动控制
+            TranAttach.RegisterAction("M1", defaultActions.MoveHeroTo);
             TranAttach.InvokeActionOn("M1", defaultActions.MoveHeroToTest);
-            TranAttach.RegisterAction("M2", ActionMoveTranToHero);
+            TranAttach.RegisterAction("M2", defaultActions.MoveTranToHero);
             TranAttach.InvokeActionOn("M2", defaultActions.MoveTranToHeroTest);
-            TranAttach.RegisterAction("TURN", ActionTurn);
+            TranAttach.RegisterAction("M3", defaultActions.SetTranScale);
+            TranAttach.InvokeActionOn("M3", DefaultActions.AlwaysTrue);
+            TranAttach.RegisterAction("TURN", defaultActions.Turn);
             TranAttach.InvokeActionOn("TURN", DefaultActions.TurnTest);
 
-            TranAttach.RegisterAction("JUMP", ActionJump,
+            // 跳跃下落控制
+            TranAttach.RegisterAction("JUMP", Jump,
                 TranAttach.InvokeWithout("JUMP")
                 );
             TranAttach.InvokeActionOn("JUMP", DefaultActions.JumpTest);
 
-            TranAttach.RegisterAction("FALL", ActionFall,
+            TranAttach.RegisterAction("FALL", defaultActions.Fall,
                 TranAttach.InvokeWithout("FALL"),
-                TranAttach.InvokeWithout("QUAKE"),
                 TranAttach.InvokeWithout("DASH")
                 );
             TranAttach.InvokeActionOn("FALL", defaultActions.FallTest);
@@ -76,327 +90,54 @@ namespace HKHeroControl
                 );
             TranAttach.InvokeActionOn("STOP", DefaultActions.AlwaysTrue);
 
-            TranAttach.RegisterAction("RUN", ActionRun,
+            TranAttach.RegisterAction("RUN", Run,
                 TranAttach.InvokeWithout("DASH"),
-                TranAttach.InvokeWithout("FIREBALL"),
-                TranAttach.InvokeWithout("QUAKE"),
-                TranAttach.InvokeWithout("ATTACK"),
                 TranAttach.InvokeWithout("RUN"));
             TranAttach.InvokeActionOn("RUN", DefaultActions.RunTest);
 
-            TranAttach.RegisterAction("IDLE", ActionIdle,
-                TranAttach.InvokeWithout("IDLE"),
-                TranAttach.Or(
-                    TranAttach.And(
-                        () => TranAttach.InvokeCount == 3,
-                        TranAttach.InvokeWith("STOP")
-                        ),
-                    () => TranAttach.InvokeCount == 2
-                ));
-            TranAttach.InvokeActionOn("IDLE", DefaultActions.AlwaysTrue);
-
-            //普通攻击
-            TranAttach.RegisterAction("C", ActionCounter,
-                TranAttach.InvokeWithout("JUMP"),
-                TranAttach.InvokeWithout("FALL"),
-                TranAttach.InvokeWithout("DASH"),
-                //TranAttach.InvokeWithout("RUN"),
-                TranAttach.InvokeWithout("C"),
-                TranAttach.InvokeWithout("ATTACK")
-                );
-            TranAttach.InvokeActionOn("C", DefaultActions.AttackTest);
-            TranAttach.RegisterAction("ATTACK", ActionAttack,
-                TranAttach.InvokeWithout("JUMP"),
-                TranAttach.InvokeWithout("FALL"),
-                TranAttach.InvokeWithout("DASH"),
-                TranAttach.Or(
-                    TranAttach.InvokeWith("RUN"),
-                    TranAttach.InvokeWith("C")
-                ),
-                TranAttach.InvokeWithout("ATTACK"));
-
-            //冲刺攻击
-            TranAttach.RegisterAction("DASH", ActionSlash,
+            // 链接技能
+            TranAttach.RegisterAction("DASH", Dash,
                 TranAttach.InvokeWithout("DASH")
                 );
             TranAttach.InvokeActionOn("DASH", DefaultActions.DashTest);
 
-            //法球攻击
-            TranAttach.RegisterAction("FIREBALL", ActionSmallShoot,
-                TranAttach.InvokeWithout("FIREBALL"),
-                TranAttach.InvokeWithout("ROAR"),
-                TranAttach.InvokeWithout("QUAKE"),
+            //普通攻击与空闲状态
+            TranAttach.RegisterAction("ATTACK", Attack,
+                TranAttach.InvokeWithout("ATTACK"));
+            TranAttach.InvokeActionOn("ATTACK", DefaultActions.AttackTest);
+
+            TranAttach.RegisterAction("Slash", Slash,
+                TranAttach.InvokeWithout("DSTAB"),
+                TranAttach.InvokeWithout("Slash"),
                 TranAttach.InvokeWithout("DASH")
-                //TranAttach.InvokeWithout("JUMP"),
-                //TranAttach.InvokeWithout("FALL"),
-                //TranAttach.InvokeWithout("RUN")
                 );
-            TranAttach.InvokeActionOn("FIREBALL", TranAttach.And(
+            TranAttach.InvokeActionOn("Slash", TranAttach.And(
                 DefaultActions.CastDownTest,
-                TranAttach.Not(
-                    TranAttach.Or(
-                        DefaultActions.DownTest,
-                        DefaultActions.UpTest
-                        )
-                    )
+                TranAttach.Not(DefaultActions.DownTest)
                 ));
 
-            ////上吼攻击
-            //TranAttach.RegisterAction("ROAR", ActionChestShoot,
-            //    TranAttach.InvokeWithout("FIREBALL"),
-            //    TranAttach.InvokeWithout("ROAR"),
-            //    TranAttach.InvokeWithout("QUAKE"),
-            //    TranAttach.InvokeWithout("DASH")
-            //    //TranAttach.InvokeWithout("JUMP"),
-            //    //TranAttach.InvokeWithout("FALL"),
-            //    //TranAttach.InvokeWithout("RUN")
-            //    );
-            //TranAttach.InvokeActionOn("ROAR", TranAttach.And(
-            //    DefaultActions.CastDownTest,
-            //    DefaultActions.UpTest,
-            //    TranAttach.Not(
-            //        TranAttach.Or(
-            //            DefaultActions.DownTest
-            //            )
-            //        )
-            //    ));
-
-            //下砸攻击
-            TranAttach.RegisterAction("QUAKE", ActionGenPlume,
-                TranAttach.InvokeWithout("FIREBALL"),
-                TranAttach.InvokeWithout("ROAR"),
-                TranAttach.InvokeWithout("QUAKE"),
-                TranAttach.InvokeWithout("DASH")
-                //TranAttach.InvokeWithout("JUMP"),
-                //TranAttach.InvokeWithout("FALL"),
-                //TranAttach.InvokeWithout("RUN")
-                );
-            TranAttach.InvokeActionOn("QUAKE", TranAttach.And(
+            TranAttach.RegisterAction("Bow", Bow,
+            TranAttach.InvokeWithout("DSTAB"),
+            TranAttach.InvokeWithout("Bow"),
+            TranAttach.InvokeWithout("DASH")
+            );
+            TranAttach.InvokeActionOn("Bow", TranAttach.And(
                 DefaultActions.CastDownTest,
-                DefaultActions.DownTest,
-                TranAttach.Not(
-                    TranAttach.Or(
-                        DefaultActions.UpTest
-                        )
-                    )
+                DefaultActions.DownTest
                 ));
 
-        }
+            TranAttach.RegisterAction("IDLE", Idle,
+                TranAttach.InvokeWithout("IDLE"),
+                TranAttach.Or(
+                    TranAttach.And(
+                        () => TranAttach.InvokeCount == 7,
+                        TranAttach.InvokeWith("STOP")
+                        ),
+                    () => TranAttach.InvokeCount == 6
+                ));
+            TranAttach.InvokeActionOn("IDLE", DefaultActions.AlwaysTrue);
 
-        bool faceRight = false;
-        private IEnumerator ActionTurn()
-        {
-            faceRight = DefaultActions.RightTest();
-            if (!faceRight)
-                HeroController.instance.FaceRight();
-            else
-                HeroController.instance.FaceLeft();
-            yield break;
-        }
-
-        private IEnumerator ActionMoveTranToHero()
-        {
-            rig.transform.localScale = HeroController.instance.transform.localScale;
-            rig.transform.position = HeroController.instance.transform.position;
-            yield break;
-        }
-
-        private IEnumerator ActionMoveHeroTo()
-        {
-            rig.transform.localScale = HeroController.instance.transform.localScale;
-            HeroController.instance.transform.position = rig.transform.position;
-            yield break;
-        }
-
-        private IEnumerator ActionIdle()
-        {
-            animator.Play("Idle");
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        void Update()
-        {
-            if (Input.GetKey(KeyCode.Alpha1))
-            {
-                Log($"Actions cnt {TranAttach.InvokeCount}: {string.Join(" ", TranAttach.curActs)}");
-                Log($"is falling: {defaultActions.FallTest()}");
-            }
-        }
-
-        private IEnumerator ActionRun()
-        {
-            if (TranAttach.IsActionInvoking("FALL") || TranAttach.IsActionInvoking("JUMP")
-                || TranAttach.IsActionInvoking("FIREBALL") || TranAttach.IsActionInvoking("C"))
-            {
-                rig.SetVX(
-                    faceRight ?
-                    HeroController.instance.RUN_SPEED_CH_COMBO :
-                    -HeroController.instance.RUN_SPEED_CH_COMBO
-                    );
-                yield return null;
-            }
-            else
-            {
-                animator.Play("Walk");
-                rig.SetVX(0.5f * (
-                    faceRight ?
-                    HeroController.instance.RUN_SPEED_CH_COMBO :
-                    -HeroController.instance.RUN_SPEED_CH_COMBO
-                    ));
-                yield return null;
-            }
-        }
-
-        IEnumerator ActionSlash()
-        {
-            rig.gravityScale = 0;
-            rig.velocity = new Vector2(0, 0);
-            HeroController.instance.SetDamageMode(1);
-
-            yield return animator.PlayAnimWait("Slash1 Antic");
-            slashCollider.AttackAntic();
-            rig.SetVX(HeroController.instance.DASH_SPEED * (faceRight ? 1 : -1));
-            yield return animator.PlayAnimWait("Slash1");
-            yield return animator.PlayAnimWait("Slash1 Recover");
-            yield return animator.PlayAnimWait("Slash2");
-            yield return animator.PlayAnimWait("Slash2 Recover");
-            yield return animator.PlayAnimWait("Slash3");
-
-            rig.SetVX(0);
-            HeroController.instance.SetDamageMode(0);
-            rig.gravityScale = 1;
-            yield return animator.PlayAnimWait("Recover");
-            slashCollider.CancelAttack();
-        }
-
-        IEnumerator ActionSmallShoot()
-        {
-            HeroController.instance.AddHealth(1);
-            const float duration = 1.5f;
-            const int repeat = 7;
-            const float speed = 25f;
-            //HeroController.instance.TakeMP(24);
-            HeroController.instance.SetDamageMode(2);
-            yield return animator.PlayAnimWait("SmallShot Antic");
-            animator.Play("SmallShot");
-
-
-            for (int i = 0; i < repeat; ++i)
-            {
-                float angle = (float)Range(10, 50) / 180f * (float)Math.PI;
-                float vx = (float)(speed * Math.Cos(angle)) * (faceRight ? 1 : -1);
-                float vy = (float)(speed * Math.Sin(angle));
-                smallShotBullet.Clone().SetPos(transform.position + new Vector3(2f * (faceRight ? 1 : -1), 0, 0)).TranHeroAttack(AttackTypes.Spell, 40 / repeat)
-                    .GetComponent<Rigidbody2D>().velocity = new Vector2(vx, vy);
-                yield return new WaitForSeconds(duration / repeat);
-            }
-
-            HeroController.instance.SetDamageMode(0);
-            HeroController.instance.QuakeInvuln();
-            yield return animator.PlayAnimWait("SmallShot Recover");
-        }
-
-        IEnumerator ActionChestShoot()
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator ActionGenPlume()
-        {
-            rig.SetVY(50);
-            animator.Play("Jump");
-            yield return new WaitForSeconds(0.3f);
-            rig.SetVY(-25);
-            animator.Play("Dstab Stomp");
-
-            int[] off = new int[] { -10, -5, 0, 5, 10 };
-            GameObject[] gos = new GameObject[off.Length];
-            PlayMakerFSM[] fsms = new PlayMakerFSM[off.Length];
-            for (int i = 0; i < off.Length; i++)
-            {
-                gos[i] = plume.Clone();
-                new ColliderGameObject(gos[i], 1);
-                gos[i].SetActive(true);
-                gos[i].transform.position += new Vector3(off[i], 0, 0);
-                fsms[i] = gos[i].LocateMyFSM("Control");
-            }
-
-
-            foreach (var fsm in fsms) fsm.SetState("Plume 1");
-            yield return new WaitForSeconds(0.1f);
-            foreach (var fsm in fsms) fsm.SetState("Plume 2");
-            yield return new WaitForSeconds(0.1f);
-            foreach (var fsm in fsms) fsm.SetState("Plume 3");
-            yield return new WaitForSeconds(0.1f);
-            foreach (var fsm in fsms) fsm.SetState("Plume 4");
-            yield return new WaitForSeconds(0.1f);
-            foreach (var fsm in fsms) fsm.SetState("Scale Up");
-            yield return new WaitForSeconds(0.5f);
-            foreach (var fsm in fsms) fsm.SetState("End");
-            yield return new WaitForSeconds(0.1f);
-
-            animator.Play("DStab Land");
-            yield break;
-        }
-
-        bool isCounter = false;
-        IEnumerator ActionCounter()
-        {
-            isCounter = true;
-            if (TranAttach.IsActionInvoking("RUN"))
-            {
-                TranAttach.InvokeAction("ATTACK");
-            }
-            On.HeroController.TakeDamage -= _NoDamage;
-            On.HeroController.TakeDamage += _NoDamage;
-            yield return animator.PlayAnimWait("Counter Antic");
-            animator.Play("Counter Ready");
-            while (InputHandler.Instance.inputActions.attack.IsPressed && isCounter) yield return null;
-            if (isCounter)
-            {
-                TranAttach.InvokeAction("ATTACK");
-            }
-            On.HeroController.TakeDamage -= _NoDamage;
-        }
-
-        IEnumerator ActionAttack()
-        {
-            slashCollider.AttackAntic();
-            //yield return animator.PlayAnimWait("Counter Block");
-            yield return animator.PlayAnimWait("Slash2");
-            yield return animator.PlayAnimWait("Slash2 Recover");
-            slashCollider.CancelAttack();
-        }
-
-        IEnumerator ActionJump()
-        {
-            yield return animator.PlayAnimWait("Antic");
-            animator.Play("Jump");
-            rig.SetVY(30);
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        private IEnumerator ActionFall()
-        {
-            animator.Play("Jump");
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        private bool HeroController_CanNailCharge(On.HeroController.orig_CanNailCharge orig, HeroController self)
-            => false;
-
-        private bool HeroController_CanQuickMap(On.HeroController.orig_CanQuickMap orig, HeroController self)
-            => !HeroController.instance.cState.dead;
-
-        private bool HeroController_CanFocus(On.HeroController.orig_CanFocus orig, HeroController self)
-            => !HeroController.instance.cState.dead;
-
-        private bool HeroController_CanTalk(On.HeroController.orig_CanTalk orig, HeroController self)
-            => !HeroController.instance.cState.dead;
-
-        private void _NoDamage(On.HeroController.orig_TakeDamage orig, HeroController self, GameObject go,
-                        GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
-        {
+            Destroy(GetComponent<EnemyDeathEffects>());
         }
 
         void OnEnable()
@@ -416,6 +157,146 @@ namespace HKHeroControl
             On.HeroController.CanFocus += HeroController_CanFocus;
             On.HeroController.CanQuickMap += HeroController_CanQuickMap;
             On.HeroController.CanNailCharge += HeroController_CanNailCharge;
+        }
+
+        bool isInit = false;
+        IEnumerator InitObj()
+        {
+            if (isInit)
+                yield break;
+            else
+                isInit = true;
+            yield return defaultActions.Turn();
+            yield return new WaitForSeconds(2);
+            Modding.Logger.Log("Transform");
+            rig.position += new Vector2(0, 10);
+        }
+        IEnumerator Jump()
+        {
+            yield return null;
+            rig.velocity = new Vector2(0, 25);
+            animator.Play("Jump");
+            yield return new WaitForSeconds(0.1f);
+        }
+        IEnumerator Run()
+        {
+            animator.Play("Run");
+            rig.SetVX(
+                HeroController.instance.cState.facingRight ?
+                HeroController.instance.RUN_SPEED_CH_COMBO :
+                -HeroController.instance.RUN_SPEED_CH_COMBO
+                );
+            yield return null;
+        }
+        IEnumerator Dash()
+        {
+            rig.gravityScale = 0;
+            On.HeroController.TakeDamage -= _NoDamage;
+            On.HeroController.TakeDamage += _NoDamage;
+            Modding.Logger.Log("G Dash");
+            rig.SetVX(HeroController.instance.cState.facingRight ?
+                HeroController.instance.DASH_SPEED :
+                -HeroController.instance.DASH_SPEED);
+            yield return animator.PlayAnimWait("G Dash");
+            rig.SetVY(0);
+
+            AttackGrimmBoss(PlayerData.instance.nailDamage);
+            yield return new WaitForSeconds(0.5f);
+            rig.SetVX(0);
+
+            Modding.Logger.Log("G Dash Recover");
+            animator.Play("G Dash Recover");
+            yield return null;
+            animator.Play("Bow Return");
+
+            rig.rotation = 0;
+            rig.gravityScale = 1;
+            On.HeroController.TakeDamage -= _NoDamage;
+        }
+
+        IEnumerator Attack()
+        {
+            AttackGrimmBoss(PlayerData.instance.nailDamage);
+            yield return Roar();
+        }
+
+        IEnumerator Slash()
+        {
+            animator.Play("Slash 1");
+            yield return null;
+            animator.Play("Slash 2");
+            yield return null;
+            animator.Play("Slash 3");
+            yield return null;
+            AttackGrimmBoss(PlayerData.instance.nailDamage);
+            animator.Play("Bow Return");
+            yield return null;
+        }
+
+        void AttackGrimmBoss(int amount)
+        {
+            GameObject GrimmBoss = GameObject.Find("Grimm Boss");
+            if (GrimmBoss != null)
+            {
+                HealthManager healthManager = GrimmBoss.GetComponent<HealthManager>();
+                if (healthManager != null)
+                {
+                    healthManager.Hit(new HitInstance()
+                    {
+                        AttackType = AttackTypes.SharpShadow,
+                        Source = gameObject,
+                        DamageDealt = amount,
+                        Multiplier = 1,
+                        MagnitudeMultiplier = 1,
+                        CircleDirection = true,
+                        IgnoreInvulnerable = false
+                    });
+                    FSMUtility.SendEventToGameObject(GrimmBoss, "TOOK DAMAGE");
+                }
+            }
+        }
+        IEnumerator Roar()
+        {
+            yield return animator.PlayAnimWait("Bow Return");
+            animator.Play("Roar Antic");
+            yield return null;
+            animator.Play("Roar");
+            yield return null;
+            animator.Play("Roar End");
+            yield return new WaitForSeconds(0.8F);
+            animator.Play("Bow Return");
+        }
+
+        IEnumerator Idle()
+        {
+            yield return Bow();
+        }
+        IEnumerator Bow()
+        {
+            if (PlayerData.instance.health <= 7)
+            {
+                PlayerData.instance.orig_AddHealth(1);
+                PlayerData.instance.UpdateBlueHealth();
+            }
+            yield return animator.PlayAnimWait("Bow");
+            yield return animator.PlayAnimWait("Bow Return");
+        }
+
+        private bool HeroController_CanNailCharge(On.HeroController.orig_CanNailCharge orig, HeroController self)
+            => false;
+
+        private bool HeroController_CanQuickMap(On.HeroController.orig_CanQuickMap orig, HeroController self)
+            => !HeroController.instance.cState.dead;
+
+        private bool HeroController_CanFocus(On.HeroController.orig_CanFocus orig, HeroController self)
+            => !HeroController.instance.cState.dead;
+
+        private bool HeroController_CanTalk(On.HeroController.orig_CanTalk orig, HeroController self)
+            => !HeroController.instance.cState.dead;
+
+        private void _NoDamage(On.HeroController.orig_TakeDamage orig, HeroController self, GameObject go,
+                        GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
+        {
         }
 
         void OnDisable()

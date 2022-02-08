@@ -46,6 +46,9 @@ namespace TranCore
             if (go.GetComponent<DENoFrameDamage>() != null)
                 foreach (var c in go.GetComponents<DENoFrameDamage>())
                     UnityEngine.Object.Destroy(c);
+            if (go.GetComponent<DamageEnemies>() != null)
+                foreach (var c in go.GetComponents<DamageEnemies>())
+                    UnityEngine.Object.Destroy(c);
 
             DENoFrameDamage damageEnemies = go.AddComponent<DENoFrameDamage>();
             damageEnemies.ignoreInvuln = true;
@@ -55,6 +58,27 @@ namespace TranCore
             damageEnemies.attackType = type;
 
             go.layer =(int) GlobalEnums.PhysLayers.HERO_ATTACK;
+            return go;
+        }
+
+        public static GameObject TranNormalDE(this GameObject go, AttackTypes type, int damage)
+        {
+            if (go.GetComponent<DamageHero>() != null) UnityEngine.Object.Destroy(go.GetComponent<DamageHero>());
+            if (go.GetComponent<DENoFrameDamage>() != null)
+                foreach (var c in go.GetComponents<DENoFrameDamage>())
+                    UnityEngine.Object.Destroy(c);
+            if (go.GetComponent<DamageEnemies>() != null)
+                foreach (var c in go.GetComponents<DamageEnemies>())
+                    UnityEngine.Object.Destroy(c);
+
+            DamageEnemies damageEnemies = go.AddComponent<DamageEnemies>();
+            damageEnemies.ignoreInvuln = true;
+            damageEnemies.circleDirection = true;
+            damageEnemies.magnitudeMult = 1;
+            damageEnemies.damageDealt = damage;
+            damageEnemies.attackType = type;
+
+            go.layer = (int)GlobalEnums.PhysLayers.HERO_ATTACK;
             return go;
         }
 

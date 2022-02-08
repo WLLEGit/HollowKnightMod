@@ -315,7 +315,7 @@ namespace HKHeroControl
             for (int i = 0; i < off.Length; i++)
             {
                 gos[i] = plume.Clone();
-                new ColliderGameObject(gos[i], 1);
+                new ColliderGameObject(gos[i], 21);
                 gos[i].SetActive(true);
                 gos[i].transform.position += new Vector3(off[i], 0, 0);
                 fsms[i] = gos[i].LocateMyFSM("Control");

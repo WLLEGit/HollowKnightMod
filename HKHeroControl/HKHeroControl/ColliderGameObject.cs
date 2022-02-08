@@ -15,10 +15,10 @@ namespace HKHeroControl
         readonly GameObject gameObject = null;
         DecorationEffects effects = null;
 
-        public ColliderGameObject(PlayMakerFSM control, string objName, int damage = 21)
-            : this(control.FsmVariables.FindFsmGameObject(objName).Value, damage) { }
+        public ColliderGameObject(PlayMakerFSM control, string objName, int damage = 21, bool normalDE = false)
+            : this(control.FsmVariables.FindFsmGameObject(objName).Value, damage, normalDE) { }
 
-        public ColliderGameObject(GameObject gameObject, int damage = 21)
+        public ColliderGameObject(GameObject gameObject, int damage = 21, bool normalDE = false)
         {
             this.gameObject = gameObject;
             if (gameObject == null)
@@ -26,7 +26,10 @@ namespace HKHeroControl
             //gameObject.AddComponent<MPGetter>();
             gameObject.layer = (int)GlobalEnums.PhysLayers.HERO_ATTACK;
             gameObject.tag = "Nail Attack";
-            gameObject.TranHeroAttack(AttackTypes.Nail, damage);
+            if (normalDE)
+                gameObject.TranNormalDE(AttackTypes.Nail, damage);
+            else
+                gameObject.TranHeroAttack(AttackTypes.Nail, damage);
         }
 
         public void SetDecorations(GameObject[] gos)

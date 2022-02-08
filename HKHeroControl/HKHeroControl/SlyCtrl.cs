@@ -45,12 +45,12 @@ namespace HKHeroControl
             var gSlashEffect = gameObject.FindGameObjectInChildren("GSlash Effect");
             gSlashCollider.SetDecorations(new GameObject[] { gSharpFlash, gSlashEffect });
 
-            cyclonePhysCollider = new ColliderGameObject(gameObject.FindGameObjectInChildren("Cyclone Phys"), 1);
+            cyclonePhysCollider = new ColliderGameObject(gameObject.FindGameObjectInChildren("Cyclone Phys"), 21, true);
             var tink = gameObject.FindGameObjectInChildren("Cyclone Tink");
             cyclonePhysCollider.SetDecorations(new GameObject[] { tink });
 
-            s1Collider = new ColliderGameObject(gameObject.FindGameObjectInChildren("S1"), 5);
-            s3Collider = new ColliderGameObject(gameObject.FindGameObjectInChildren("S3"), 5);
+            s1Collider = new ColliderGameObject(gameObject.FindGameObjectInChildren("S1"), 21);
+            s3Collider = new ColliderGameObject(gameObject.FindGameObjectInChildren("S3"), 21);
 
 
             TranAttach.RegisterAction("M1", ActionMoveHeroTo);
