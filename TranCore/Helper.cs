@@ -82,6 +82,20 @@ namespace TranCore
             return go;
         }
 
+        public static List<(string, GameObject)> TravelFindRecursively(this GameObject gameObject, Func<GameObject, bool> condF, string prefix="")
+        {
+            List<(string, GameObject)> res = new List<(string, GameObject)>();
+            foreach(Transform t in gameObject.transform)
+            {
+                GameObject go = t.gameObject;
+                if (condF(go))
+                    res.Add(($"{prefix}{go.name}", go));
+                res.Union(t.gameObject.TravelFindRecursively(condF, $"{prefix}{go.name}/"));
+            }
+            res.Sort();
+            return res;
+        }
+
         public static Func<bool> InvokeWith(this TranAttach t, string name) => () => t.IsActionInvoking(name);
         public static Func<bool> InvokeWithout(this TranAttach t, string name) => () => !t.IsActionInvoking(name);
         public static Func<bool> OnKeyDown(this TranAttach t, KeyCode key) => () => Input.GetKeyDown(key);

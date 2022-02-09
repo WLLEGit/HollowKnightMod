@@ -113,6 +113,24 @@ namespace TranCore
             isFall = false;
         }
         #endregion
+        #region RS_Down
+        public static bool RSDownTest()
+        {
+            return InputHandler.Instance.inputActions.rs_down;
+        }
+        #endregion
+        #region DreamNail
+        public static bool DreamNailTest()
+        {
+            return InputHandler.Instance.inputActions.dreamNail;
+        }
+        #endregion
+        #region SuperDash
+        public static bool SuperDashTest()
+        {
+            return InputHandler.Instance.inputActions.superDash;
+        }
+        #endregion
         public IEnumerator Stop()
         {
             rig.SetVX(0);

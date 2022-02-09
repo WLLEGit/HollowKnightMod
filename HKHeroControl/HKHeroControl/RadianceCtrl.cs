@@ -105,24 +105,19 @@ namespace HKHeroControl
             TranAttach.RegisterAction("DREAMNAIL", ActionOrbAttack,
                 TranAttach.InvokeWithout("DREAMNAIL")
                 );
-            TranAttach.InvokeActionOn("DREAMNAIL", DreamNailTest);
+            TranAttach.InvokeActionOn("DREAMNAIL", DefaultActions.DreamNailTest);
 
             //水晶冲刺->回血
             TranAttach.RegisterAction("SUPERDASH", ActionHeal,
                 TranAttach.InvokeWithout("SUPERDASH")
                 );
-            TranAttach.InvokeActionOn("SUPERDASH", SuperDashTest);
+            TranAttach.InvokeActionOn("SUPERDASH", DefaultActions.SuperDashTest);
 
             //向下看->扇形剑雨
             TranAttach.RegisterAction("LOOKDOWN", ActionFanAttack,
                 TranAttach.InvokeWithout("LOOKDOWN")
                 );
-            TranAttach.InvokeActionOn("LOOKDOWN", RSDownTest);
-        }
-
-        private bool RSDownTest()
-        {
-            return InputHandler.Instance.inputActions.rs_down;
+            TranAttach.InvokeActionOn("LOOKDOWN", DefaultActions.RSDownTest);
         }
 
         private IEnumerator ActionHeal()
@@ -132,15 +127,8 @@ namespace HKHeroControl
             yield return new WaitForSeconds(0.5f);
         }
 
-        private bool SuperDashTest()
-        {
-            return InputHandler.Instance.inputActions.superDash;
-        }
 
-        private bool DreamNailTest()
-        {
-            return InputHandler.Instance.inputActions.dreamNail;
-        }
+
 
 
         private IEnumerator ActionTele()

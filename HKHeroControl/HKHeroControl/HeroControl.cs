@@ -18,7 +18,7 @@ namespace HKHeroControl
 {
     public class HeroControl : Mod
     {
-        public static Dictionary<string, Dictionary<string, UnityEngine.GameObject>>  PreloadGameObjects;
+        public static Dictionary<string, Dictionary<string, UnityEngine.GameObject>> PreloadGameObjects;
         public GameObject GrimmGO = null;
         public GameObject HKGO = null;
         public GameObject SlyGO = null;
@@ -59,6 +59,12 @@ namespace HKHeroControl
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                GameObject knight = HeroController.instance.gameObject;
+                if (knight.GetComponent<GlobalAttachSingleton>() != null)
+                    foreach (var c in knight.GetComponents<GlobalAttachSingleton>())
+                        UnityEngine.Object.Destroy(c);
+                knight.AddComponent<GlobalAttachSingleton>();
+
                 if (nextGO != null)
                 {
                     curGO?.SetActive(false);
@@ -74,13 +80,13 @@ namespace HKHeroControl
                 }
             }
 
-            //if(Input.GetKeyDown(KeyCode.F11))
-            //{
-            //    isDbgLockHealth = !isDbgLockHealth;
-            //    Log($"Lock Health: {isDbgLockHealth}");
-            //}
-            //if (isDbgLockHealth)
-            //    PlayerData.instance.health = 11;
+            if (Input.GetKeyDown(KeyCode.F11))
+            {
+                isDbgLockHealth = !isDbgLockHealth;
+                Log($"Lock Health: {isDbgLockHealth}");
+            }
+            if (isDbgLockHealth)
+                PlayerData.instance.health = 11;
         }
 
         private void InitChoices()
@@ -118,6 +124,7 @@ namespace HKHeroControl
         {
             //{ "HK Prime", new ConfigType("GG_Hollow_Knight", "Battle Scene/HK Prime")},
             {"Grimm", new ConfigType("GG_Grimm", "Grimm Scene/Grimm Boss") },
+            {"Grimm Spike Holder", new ConfigType("GG_Grimm","Grimm Spike Holder") },
             {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") },
             {"Sly", new ConfigType("GG_Sly", "Battle Scene/Sly Boss") },
             {"Radiance", new ConfigType("GG_Radiance", "Boss Control/Absolute Radiance") },
