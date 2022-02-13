@@ -44,12 +44,18 @@ namespace HKHeroControl
                 eyeBeamBursts[i].SetActive(false);
             }
 
-            radiantNailComb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("TL")[0].gameObject.Value;
+            radiantNailComb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("TL")[0].gameObject.Value.Clone();
+            DontDestroyOnLoad(radiantNailComb);
+            radiantNailComb.SetActive(false);
             
-            radiantNail = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("CW Spawn")[0].gameObject.Value;
+            radiantNail = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("CW Spawn")[0].gameObject.Value.Clone();
+            DontDestroyOnLoad(radiantNail);
+            radiantNail.SetActive(false);
             radiantNail.TranHeroAttack(AttackTypes.Nail, nailAttack);
             
-            radiantOrb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("Spawn Fireball")[0].gameObject.Value;
+            radiantOrb = gameObject.GetFSMActionsOnState<SpawnObjectFromGlobalPool>("Spawn Fireball")[0].gameObject.Value.Clone();
+            DontDestroyOnLoad(radiantOrb);
+            radiantOrb.SetActive(false);
             radiantOrb.FindGameObjectInChildren("Hero Hurter").TranHeroAttack(AttackTypes.Spell, nailAttack);
 
             foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v);

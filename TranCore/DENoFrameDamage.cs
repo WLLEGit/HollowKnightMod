@@ -75,7 +75,7 @@ namespace TranCore
 
         private void OnEnable()
         {
-            dmgTargets.Clear();
+            //dmgTargets.Clear();
         }
 
         private void FixedUpdate()

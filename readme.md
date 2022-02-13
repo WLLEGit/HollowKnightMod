@@ -4,6 +4,8 @@
 
 1.5.78版本mod，请自行配置mod环境
 
+Trancore项目原地址：[HKLab/TranCore (github.com)](https://github.com/HKLab/TranCore)
+
 ## BOSS控制MOD
 
 将Controller文件夹（包含文件夹本身）放入`<你的空洞骑士目录>\hollow_knight_Data\Managed\Mods` 中
