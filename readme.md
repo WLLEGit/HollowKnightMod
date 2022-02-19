@@ -50,5 +50,6 @@ Trancore项目原地址：[HKLab/TranCore (github.com)](https://github.com/HKLab
 - 梦钉：光球\*3
 - 冲刺：光束\*3
 - 向下看：扇形剑雨
+- 右摇杆向上：光柱
 - 水晶冲刺：回血
 

@@ -29,6 +29,8 @@ namespace HKHeroControl
         GameObject eyeBeamGlow = null;                  //八向激光 
         GameObject[] eyeBeamBursts = new GameObject[3]; //三组
 
+        GameObject beamSweeper = null;
+
         const int nailAttack = 63;
         void Awake()
         {
@@ -57,6 +59,12 @@ namespace HKHeroControl
             DontDestroyOnLoad(radiantOrb);
             radiantOrb.SetActive(false);
             radiantOrb.FindGameObjectInChildren("Hero Hurter").TranHeroAttack(AttackTypes.Spell, nailAttack);
+
+            beamSweeper = HeroControl.PreloadGameObjects["GG_Radiance"]["Boss Control/Beam Sweeper"].Clone();
+            DontDestroyOnLoad(beamSweeper);
+            beamSweeper.SetActive(false);
+            beamSweeper.SetParent(null);
+            InitBeamSweep();
 
             foreach (var v in GetComponents<PlayMakerFSM>()) Destroy(v);
             Destroy(GetComponent<EnemyDeathEffects>());
@@ -124,6 +132,12 @@ namespace HKHeroControl
                 TranAttach.InvokeWithout("LOOKDOWN")
                 );
             TranAttach.InvokeActionOn("LOOKDOWN", DefaultActions.RSDownTest);
+
+            //右摇杆向上->光柱
+            TranAttach.RegisterAction("LOOKUP", ActionBeamSweep,
+                TranAttach.InvokeWithout("LOOKUP")
+                );
+            TranAttach.InvokeActionOn("LOOKUP", () => InputHandler.Instance.inputActions.rs_up);
         }
 
         private IEnumerator ActionHeal()
@@ -133,9 +147,55 @@ namespace HKHeroControl
             yield return new WaitForSeconds(0.5f);
         }
 
+        private void InitBeamSweep()
+        {
+            // Reference: https://github.com/a2659802/hollowknight.childoflight
 
+            PlayMakerFSM ctrl = beamSweeper.LocateMyFSM("Control");
 
+            var spawnAction = ctrl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
+            GameObject beamPrefab = spawnAction.gameObject.Value.Clone();
+            DontDestroyOnLoad(beamPrefab);
+            beamPrefab.SetActive(false);
 
+            beamSweeper.TranHeroAttack(AttackTypes.Spell, 1);
+            beamPrefab.TranHeroAttack(AttackTypes.Spell, 7);
+
+            ctrl.RemoveAction("Beam Sweep R 2", 4);
+            ctrl.InsertMethod("Beam Sweep R 2", 4, () => {
+                if (HeroController.instance != null)
+                {
+                    Vector3 spawnPoint = HeroController.instance.transform.position;
+                    spawnPoint.y -= 10;
+                    spawnPoint.x -= 30;
+                    beamSweeper.transform.position = spawnPoint;
+                }
+            });
+
+            var spawnBeamAction = new SpawnObjectFromGlobalPoolOverTime()
+            {
+                gameObject = beamPrefab,
+                spawnPoint = spawnAction.spawnPoint,
+                position = Vector3.zero,
+                rotation = Vector3.zero,
+                frequency = 0.075f
+            };
+            ctrl.RemoveAction("Beam Sweep R 2", 5);
+            ctrl.InsertAction("Beam Sweep R 2", spawnBeamAction, 5);
+
+            ctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
+
+            var idle = ctrl.GetState("Idle");
+            idle.Transitions = new FsmTransition[] { };
+            ctrl.Fsm.SaveActions();
+            beamSweeper.SetActive(true);
+        }
+
+        private IEnumerator ActionBeamSweep()
+        {
+            beamSweeper.LocateMyFSM("Control").SetState("Beam Sweep R 2");
+            yield return new WaitForEndOfFrame();
+        }
 
         private IEnumerator ActionTele()
         {

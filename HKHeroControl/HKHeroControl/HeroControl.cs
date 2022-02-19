@@ -128,7 +128,7 @@ namespace HKHeroControl
             {"Hollow Knight", new ConfigType("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss") },
             {"Sly", new ConfigType("GG_Sly", "Battle Scene/Sly Boss") },
             {"Radiance", new ConfigType("GG_Radiance", "Boss Control/Absolute Radiance") },
-            //{"Radiance Beam Sweeper", new ConfigType("GG_Radiance","Boss Control/Beam Sweeper") },
+            {"Radiance Beam Sweeper", new ConfigType("GG_Radiance","Boss Control/Beam Sweeper") },
         };
 
         private Dictionary<KeyCode, GameObject> switchChoices;
