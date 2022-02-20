@@ -270,6 +270,8 @@ namespace HKHeroControl
             yield return animator.PlayAnimWait("G Dash Antic");
             yield return new WaitForSeconds(0.35f);
 
+            yield return ActionUppercut();
+
             bouncer.CancelAttack();
             HeroController.instance.SetDamageMode(0);
             rig.gravityScale = 1;
@@ -279,7 +281,7 @@ namespace HKHeroControl
             bouncer.AttackAntic();
             yield return animator.PlayAnimWait("Uppercut Antic");
             animator.Play("Uppercut");
-            HeroController.instance.SetDamageMode(1);
+            HeroController.instance.SetDamageMode(2);
             rig.velocity = new Vector2(HeroController.instance.DASH_SPEED * (faceRight ? 1 : -1), 45);
             yield return new WaitForSeconds(0.25f);
 

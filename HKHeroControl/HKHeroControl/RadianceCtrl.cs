@@ -154,12 +154,8 @@ namespace HKHeroControl
             PlayMakerFSM ctrl = beamSweeper.LocateMyFSM("Control");
 
             var spawnAction = ctrl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
-            GameObject beamPrefab = spawnAction.gameObject.Value.Clone();
-            DontDestroyOnLoad(beamPrefab);
-            beamPrefab.SetActive(false);
 
             beamSweeper.TranHeroAttack(AttackTypes.Spell, 1);
-            beamPrefab.TranHeroAttack(AttackTypes.Spell, 7);
 
             ctrl.RemoveAction("Beam Sweep R 2", 4);
             ctrl.InsertMethod("Beam Sweep R 2", 4, () => {
@@ -174,7 +170,7 @@ namespace HKHeroControl
 
             var spawnBeamAction = new SpawnObjectFromGlobalPoolOverTime()
             {
-                gameObject = beamPrefab,
+                gameObject = spawnAction.gameObject,
                 spawnPoint = spawnAction.spawnPoint,
                 position = Vector3.zero,
                 rotation = Vector3.zero,
@@ -194,7 +190,15 @@ namespace HKHeroControl
         private IEnumerator ActionBeamSweep()
         {
             beamSweeper.LocateMyFSM("Control").SetState("Beam Sweep R 2");
-            yield return new WaitForEndOfFrame();
+            yield return new WaitForSeconds(0.5f);
+            GameObject[] objs = (GameObject[])Resources.FindObjectsOfTypeAll(typeof(GameObject));
+            foreach (var obj in objs)
+            {
+                if (obj.name == "Radiant Beam R(Clone)")
+                {
+                    obj.TranHeroAttack(AttackTypes.Spell, nailAttack / 3);
+                }
+            }
         }
 
         private IEnumerator ActionTele()
